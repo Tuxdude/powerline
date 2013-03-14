@@ -11,7 +11,8 @@
 				"soft": " "
 			}
 		},
-		"spaces": 1
+		"spaces": 1,
+		"paths" : [ "~/.config/powerline/modules/" ]
 	},
 	"ext": {
 		"ipython": {
@@ -19,8 +20,8 @@
 			"theme": "default"
 		},
 		"shell": {
-			"colorscheme": "default",
-			"theme": "default"
+			"colorscheme": "termsaber",
+			"theme": "termsaber"
 		},
 		"tmux": {
 			"colorscheme": "default",
