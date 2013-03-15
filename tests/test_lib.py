@@ -1,5 +1,5 @@
 # vim:fileencoding=utf-8:noet
-from powerline.lib import mergedicts, underscore_to_camelcase, add_divider_highlight_group, humanize_bytes
+from powerline.lib import mergedicts, add_divider_highlight_group, humanize_bytes
 from powerline.lib.vcs import guess
 from subprocess import call, PIPE
 import os
@@ -8,10 +8,6 @@ from tests import TestCase
 
 
 class TestLib(TestCase):
-	def test_underscore_to_camelcase(self):
-		self.assertEqual(underscore_to_camelcase('abc_def_ghi'), 'AbcDefGhi')
-		self.assertEqual(underscore_to_camelcase('abc_def__ghi'), 'AbcDef_Ghi')
-
 	def test_mergedicts(self):
 		d = {}
 		mergedicts(d, {'abc': {'def': 'ghi'}})
@@ -48,7 +44,7 @@ class TestVCS(TestCase):
 		repo = guess(path=GIT_REPO)
 		self.assertNotEqual(repo, None)
 		self.assertEqual(repo.branch(), 'master')
-		self.assertEqual(repo.status(), '   ')
+		self.assertEqual(repo.status(), None)
 		self.assertEqual(repo.status('file'), None)
 		with open(os.path.join(GIT_REPO, 'file'), 'w') as f:
 			f.write('abc')
@@ -69,6 +65,7 @@ class TestVCS(TestCase):
 			repo = guess(path=HG_REPO)
 			self.assertNotEqual(repo, None)
 			self.assertEqual(repo.branch(), 'default')
+			self.assertEqual(repo.status(), None)
 			with open(os.path.join(HG_REPO, 'file'), 'w') as f:
 				f.write('abc')
 				f.flush()
