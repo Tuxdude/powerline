@@ -3,7 +3,7 @@
         "groups": {
             "user": { "fg": "white", "bg": "darkblue", "attr": ["bold"] },
             "superuser": { "fg": "white", "bg": "brightred", "attr": ["bold"] },
-            "virtualenv": { "fg": "white", "bg": "darkcyan" },
+            "virtualenv": { "fg": "white", "bg": "darkestcyan" },
             "branch": { "fg": "white", "bg": "gray2" },
             "branch_dirty": { "fg": "white", "bg": "darkestred" },
             "branch_clean": { "fg": "gray9", "bg": "gray2" },

@@ -31,6 +31,9 @@
                 "name": "branch"
             },
             {
+                "name": "virtualenv"
+            },
+            {
                 "module": "tuxy",
                 "name": "sandbox_id"
             },
