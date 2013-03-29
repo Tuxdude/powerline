@@ -34,15 +34,15 @@
                 "name": "virtualenv"
             },
             {
-                "module": "tuxy",
+                "module": "powerline.segments.tuxy",
                 "name": "sandbox_id"
             },
             {
-                "module": "tuxy",
+                "module": "powerline.segments.tuxy",
                 "name": "sandbox_perforce_branch_name"
             },
             {
-                "module": "tuxy",
+                "module": "powerline.segments.tuxy",
                 "name": "sandbox_flavor"
             },
             {
