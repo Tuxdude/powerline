@@ -12,6 +12,9 @@
 		"cwd:divider":        { "fg": "gray61", "bg": "darkgreencopper" },
 		"hostname":           { "fg": "oldlace", "bg": "darkgreencopper" },
 		"exit_fail":          { "fg": "oldlace", "bg": "red" },
-		"exit_success":       { "fg": "oldlace", "bg": "green" }
+		"exit_success":       { "fg": "oldlace", "bg": "green" },
+		"sandbox_id": { "fg": "white", "bg": "darkorange3" },
+		"sandbox_perforce_branch_name": { "fg": "white", "bg": "darkestblue" },
+		"sandbox_flavor": { "fg": "white", "bg": "darkorange" }
 	}
 }
