@@ -2,8 +2,8 @@ Powerline
 =========
 
 :Author: Kim Silkebækken (kim.silkebaekken+vim@gmail.com)
-:Forked Source: https://github.com/Tuxdude/powerline
-:Original Source: https://github.com/Lokaltog/powerline
+:ForkedSource: https://github.com/Tuxdude/powerline
+:OriginalSource: https://github.com/Lokaltog/powerline
 :Version: beta
 :Build status:
     .. image:: https://travis-ci.org/Tuxdude/powerline.png?branch=tuxdude-dev
