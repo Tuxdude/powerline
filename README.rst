@@ -2,10 +2,11 @@ Powerline
 =========
 
 :Author: Kim Silkebækken (kim.silkebaekken+vim@gmail.com)
-:Source: https://github.com/Lokaltog/powerline
+:Forked Source: https://github.com/Tuxdude/powerline
+:Original Source: https://github.com/Lokaltog/powerline
 :Version: beta
 :Build status:
-    .. image:: https://api.travis-ci.org/Lokaltog/powerline.png?branch=develop
+    .. image:: https://travis-ci.org/Tuxdude/powerline.png?branch=tuxdude-dev
        :target: `travis-build-status`_
        :alt: Build status
 
@@ -18,7 +19,7 @@ project is currently in a stable beta and almost ready for release.
 * Check out `powerline-fonts <https://github.com/Lokaltog/powerline-fonts>`_ 
   for pre-patched versions of popular coding fonts.
 
-.. _travis-build-status: https://travis-ci.org/Lokaltog/powerline
+.. _travis-build-status: https://travis-ci.org/Tuxdude/powerline
 
 Screenshots
 -----------
