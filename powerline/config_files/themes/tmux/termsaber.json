@@ -1,0 +1,69 @@
+{
+    "default_module": "powerline.segments.common",
+    "segment_data": {
+        "uptime": {
+            "before": "⇑ "
+        },
+        "external_ip": {
+            "before": "ⓦ  "
+        },
+        "date": {
+            "before": "⌚ "
+        },
+        "email_imap_alert": {
+            "before": "✉ ",
+            "args": {
+                "username": "",
+                "password": ""
+            }
+        },
+        "user" : {
+                "before": " "
+        },
+        "hostname": {
+            "args": {
+                "only_if_ssh": false
+            }
+        },
+        "virtualenv": {
+            "before": "ⓔ  "
+        },
+        "branch": {
+            "before": " "
+        },
+        "sandbox_perforce_branch_name": {
+            "before": " "
+        }
+    },
+    "segments": {
+        "left": [
+            {
+                "name": "virtualenv"
+            },
+            {
+                "module": "powerline.segments.tuxy",
+                "name": "sandbox_id"
+            },
+            {
+                "module": "powerline.segments.tuxy",
+                "name": "sandbox_perforce_branch_name"
+            },
+            {
+                "module": "powerline.segments.tuxy",
+                "name": "sandbox_flavor"
+            }
+            ],
+        "right": [
+            {
+                "name": "uptime",
+                "priority": 50
+            },
+            {
+                "name": "user"
+            },
+            {
+                "name": "hostname"
+            }
+        ]
+    }
+}
