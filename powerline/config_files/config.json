@@ -23,8 +23,8 @@
 			"theme": "termsaber"
 		},
 		"tmux": {
-			"colorscheme": "default",
-			"theme": "default"
+			"colorscheme": "termsaber",
+			"theme": "termsaber"
 		},
 		"vim": {
 			"colorscheme": "default",
