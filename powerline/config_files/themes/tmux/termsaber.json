@@ -28,7 +28,7 @@
         "virtualenv": {
             "before": "ⓔ  "
         },
-        "vcs_branch": {
+        "branch": {
             "before": " "
         },
         "sandbox_perforce_branch_name": {
