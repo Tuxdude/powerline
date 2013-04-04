@@ -27,11 +27,6 @@
         "branch": { "fg": "white", "bg": "gray2", "attr": ["bold"] },
         "branch_dirty": { "fg": "white", "bg": "darkestred", "attr": ["bold"] },
         "branch_clean": { "fg": "gray9", "bg": "gray2", "attr": ["bold"] },
-        "cwd": { "fg": "yellow", "bg": "black" },
-        "cwd:current_folder": { "fg": "yellow", "bg": "black", "attr": ["bold"] },
-        "cwd:divider": { "fg": "gray7", "bg": "black" },
-        "exit_fail": { "fg": "white", "bg": "darkestred" },
-        "exit_success": { "fg": "white", "bg": "darkestgreen" },
         "sandbox_id": { "fg": "white", "bg": "darkorange3", "attr": ["bold"] },
         "sandbox_flavor": { "fg": "white", "bg": "darkorange", "attr" : ["bold"] },
         "spacer": { "fg": "white", "bg": "gray0" }
