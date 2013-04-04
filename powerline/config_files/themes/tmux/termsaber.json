@@ -39,6 +39,10 @@
         "left": [
             {
                 "module": "powerline.segments.tuxy",
+                "name": "spacer"
+            },
+            {
+                "module": "powerline.segments.tuxy",
                 "name": "branch"
             },
             {

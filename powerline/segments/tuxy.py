@@ -88,3 +88,6 @@ def sandbox_flavor():
         return TmuxInfo.get_env_var('FLAVOR')
     else:
         return os.environ.get('FLAVOR')
+
+def spacer():
+    return ''
