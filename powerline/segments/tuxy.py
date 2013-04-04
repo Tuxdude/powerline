@@ -36,11 +36,11 @@ class TmuxInfo:
                 return val
         return None
 
-def vcs_branch(status_colors=True):
+def branch(status_colors=True):
     '''Tmux safe version of returning the current VSC branch.@
 
     :param bool status_colors:
-		determines whether repository status will be used to determine highlighting. Default: True.
+    determines whether repository status will be used to determine highlighting. Default: True.
 
     Highlight groups used: ``branch_clean``, ``branch_dirty``, ``branch``.
     '''
@@ -49,14 +49,14 @@ def vcs_branch(status_colors=True):
         if cwd is not None:
             repo = guess(path=cwd)
             if repo:
-                branch = repo.branch()
+                branch_name = repo.branch()
                 if status_colors:
                     return [{
-				'contents': branch,
-				'highlight_group': ['branch_dirty' if repo.status() else 'branch_clean', 'branch'],
-			    }]
+                                'contents': branch_name,
+                                'highlight_group': ['branch_dirty' if repo.status() else 'branch_clean', 'branch'],
+                            }]
                 else:
-                    return branch
+                    return branch_name
     else:
         return common.branch(status_colors)
     return None

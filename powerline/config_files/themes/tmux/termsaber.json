@@ -39,7 +39,7 @@
         "left": [
             {
                 "module": "powerline.segments.tuxy",
-                "name": "vcs_branch"
+                "name": "branch"
             },
             {
                 "module": "powerline.segments.tuxy",
