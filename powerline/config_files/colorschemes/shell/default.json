@@ -14,7 +14,6 @@
 		"exit_fail": { "fg": "white", "bg": "darkestred" },
 		"exit_success": { "fg": "white", "bg": "darkestgreen" },
 		"sandbox_id": { "fg": "white", "bg": "darkorange3" },
-		"sandbox_perforce_branch_name": { "fg": "white", "bg": "darkestblue" },
 		"sandbox_flavor": { "fg": "white", "bg": "darkorange" }
 	}
 }

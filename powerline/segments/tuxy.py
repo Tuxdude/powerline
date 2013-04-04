@@ -37,14 +37,24 @@ class TmuxInfo:
         return None
 
 def branch(status_colors=True):
-    '''Tmux safe version of returning the current VSC branch.@
+    '''Tmux safe version of returning the current VCS branch.@
 
     :param bool status_colors:
-    determines whether repository status will be used to determine highlighting. Default: True.
+    determines whether repository status will be used to determine highlighting.
+    Default: True.
 
     Highlight groups used: ``branch_clean``, ``branch_dirty``, ``branch``.
     '''
     if TmuxInfo.has_tmux():
+        # Check if it is a Perforce branch
+        branch_name = TmuxInfo.get_env_var('BRANCHNAME')
+        if branch_name is not None:
+            return [{
+                        'contents' : branch_name,
+                        'highlight_group' : 'branch_dirty'
+                    }]
+
+        # Try other VCSs next
         cwd = TmuxInfo.get_env_var('PWD')
         if cwd is not None:
             repo = guess(path=cwd)
@@ -58,7 +68,15 @@ def branch(status_colors=True):
                 else:
                     return branch_name
     else:
-        return common.branch(status_colors)
+        # Check if it is a Perforce branch
+        branch_name = os.environ.get('BRANCHNAME')
+        if branch_name is not None:
+            return [{
+                        'contents' : branch_name,
+                        'highlight_group' : 'branch_dirty'
+                    }]
+        else:
+            return common.branch(status_colors)
     return None
 
 def virtualenv():
@@ -76,12 +94,6 @@ def sandbox_id():
         return TmuxInfo.get_env_var('SANDBOX_ID')
     else:
         return os.environ.get('SANDBOX_ID')
-
-def sandbox_perforce_branch_name():
-    if TmuxInfo.has_tmux():
-        return TmuxInfo.get_env_var('BRANCHNAME')
-    else:
-        return os.environ.get('BRANCHNAME')
 
 def sandbox_flavor():
     if TmuxInfo.has_tmux():

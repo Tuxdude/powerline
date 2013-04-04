@@ -15,9 +15,6 @@
             "branch": {
                 "before": " "
             },
-            "sandbox_perforce_branch_name": {
-                "before": " "
-            }
         },
         "segments": {
             "left": [
@@ -28,9 +25,6 @@
                 "name": "hostname"
             },
             {
-                "name": "branch"
-            },
-            {
                 "name": "virtualenv"
             },
             {
@@ -38,8 +32,7 @@
                 "name": "sandbox_id"
             },
             {
-                "module": "powerline.segments.tuxy",
-                "name": "sandbox_perforce_branch_name"
+                "name": "branch"
             },
             {
                 "module": "powerline.segments.tuxy",

@@ -31,19 +31,12 @@
         "branch": {
             "before": " "
         },
-        "sandbox_perforce_branch_name": {
-            "before": " "
-        }
     },
     "segments": {
         "left": [
             {
                 "module": "powerline.segments.tuxy",
                 "name": "spacer"
-            },
-            {
-                "module": "powerline.segments.tuxy",
-                "name": "branch"
             },
             {
                 "module": "powerline.segments.tuxy",
@@ -55,7 +48,7 @@
             },
             {
                 "module": "powerline.segments.tuxy",
-                "name": "sandbox_perforce_branch_name"
+                "name": "branch"
             },
             {
                 "module": "powerline.segments.tuxy",
