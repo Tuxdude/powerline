@@ -15,8 +15,8 @@
 	},
 	"ext": {
 		"ipython": {
-			"colorscheme": "default",
-			"theme": "default"
+			"colorscheme": "termsaber",
+			"theme": "termsaber"
 		},
 		"shell": {
 			"colorscheme": "termsaber",
