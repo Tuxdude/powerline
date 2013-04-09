@@ -19,7 +19,9 @@ class TmuxInfo:
     @classmethod
     def update_pane_info(cls):
         if cls.pane_info == 0:
-            cls.pane_info = _run_cmd(shlex.split('tmux display-message -p "#S_#I_#P"'))
+            tmux_cmd = 'tmux display-message -p ' + \
+                       '"#{session_name}_#{window_index}_#{pane_index}"'
+            cls.pane_info = _run_cmd(shlex.split(tmux_cmd))
         return None
 
     @classmethod
