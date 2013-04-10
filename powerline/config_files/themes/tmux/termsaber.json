@@ -34,7 +34,10 @@
                 "name": "sandbox_id"
             },
             {
-                "name": "branch"
+                "name": "branch",
+                "args": {
+                        "status_colors": 1
+                }
             },
             {
                 "module": "powerline.segments.tuxy",
