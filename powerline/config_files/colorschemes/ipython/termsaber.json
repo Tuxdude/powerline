@@ -1,5 +1,5 @@
 {
-    "name": "Default color scheme for IPython prompt",
+    "name": "Termsaber color scheme for IPython prompt",
     "groups": {
         "virtualenv": { "fg": "white", "bg": "darkblue", "attr": ["bold"] },
         "prompt": { "fg": "gray9", "bg": "gray2", "attr": ["bold"] },
