@@ -34,7 +34,6 @@
                 "name": "sandbox_id"
             },
             {
-                "module": "powerline.segments.tuxy",
                 "name": "branch"
             },
             {

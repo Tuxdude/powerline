@@ -1,5 +1,6 @@
 import os
 from powerline.lib.vcs import guess
+from powerline.theme import requires_segment_info
 import powerline.segments.common as common
 import shlex
 
@@ -13,6 +14,7 @@ def _run_cmd(cmd):
         return None
     return stdout.strip()
 
+@requires_segment_info
 class TmuxInfo:
     pane_info = 0
 
@@ -25,8 +27,8 @@ class TmuxInfo:
         return None
 
     @classmethod
-    def has_tmux(cls):
-        return os.environ.get('TMUX') and (cls.update_pane_info() or cls.pane_info)
+    def has_tmux(cls, segment_info):
+        return segment_info['environ'].get('TMUX') and (cls.update_pane_info() or cls.pane_info)
 
     @classmethod
     def get_env_var(cls, env_var):
@@ -38,6 +40,7 @@ class TmuxInfo:
                 return val
         return None
 
+@requires_segment_info
 def branch(status_colors=True):
     '''Tmux safe version of returning the current VCS branch.@
 
@@ -47,7 +50,7 @@ def branch(status_colors=True):
 
     Highlight groups used: ``branch_clean``, ``branch_dirty``, ``branch``.
     '''
-    if TmuxInfo.has_tmux():
+    if TmuxInfo.has_tmux(segment_info):
         # Check if it is a Perforce branch
         branch_name = TmuxInfo.get_env_var('BRANCHNAME')
         if branch_name is not None:
@@ -71,7 +74,7 @@ def branch(status_colors=True):
                     return branch_name
     else:
         # Check if it is a Perforce branch
-        branch_name = os.environ.get('BRANCHNAME')
+        branch_name = segment_info['environ'].get('BRANCHNAME')
         if branch_name is not None:
             return [{
                         'contents' : branch_name,
@@ -81,9 +84,10 @@ def branch(status_colors=True):
             return common.branch(status_colors)
     return None
 
-def virtualenv():
+@requires_segment_info
+def virtualenv(pl, segment_info):
     '''Tmux safe version of returning the name of the current Python virtualenv.'''
-    if TmuxInfo.has_tmux():
+    if TmuxInfo.has_tmux(segment_info):
         virtual_env_var = TmuxInfo.get_env_var('VIRTUAL_ENV')
         if virtual_env_var is not None:
             return os.path.basename(virtual_env_var)
@@ -91,17 +95,20 @@ def virtualenv():
         return common.virtualenv()
     return None
 
-def sandbox_id():
-    if TmuxInfo.has_tmux():
+@requires_segment_info
+def sandbox_id(pl, segment_info):
+    if TmuxInfo.has_tmux(segment_info):
         return TmuxInfo.get_env_var('SANDBOX_ID')
     else:
-        return os.environ.get('SANDBOX_ID')
+        return segment_info['environ'].get('SANDBOX_ID')
 
-def sandbox_flavor():
-    if TmuxInfo.has_tmux():
+@requires_segment_info
+def sandbox_flavor(pl, segment_info):
+    if TmuxInfo.has_tmux(segment_info):
         return TmuxInfo.get_env_var('FLAVOR')
     else:
-        return os.environ.get('FLAVOR')
+        return segment_info['environ'].get('FLAVOR')
 
-def spacer():
+@requires_segment_info
+def spacer(pl, segment_info):
     return ''
