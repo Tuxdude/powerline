@@ -2,6 +2,7 @@
 
 from powerline.theme import Theme
 from unicodedata import east_asian_width, combining
+import os
 
 
 try:
@@ -18,20 +19,34 @@ def construct_returned_value(rendered_highlighted, segments, output_raw):
 
 
 class Renderer(object):
-	def __init__(self, theme_config, local_themes, theme_kwargs, colorscheme, **options):
+	segment_info = {
+		'environ': os.environ,
+		'getcwd': getattr(os, 'getcwdu', os.getcwd),
+		'home': os.environ.get('HOME'),
+	}
+
+	def __init__(self,
+				theme_config,
+				local_themes,
+				theme_kwargs,
+				colorscheme,
+				pl,
+				**options):
 		self.__dict__.update(options)
 		self.theme_config = theme_config
+		theme_kwargs['pl'] = pl
+		self.pl = pl
 		self.theme = Theme(theme_config=theme_config, **theme_kwargs)
 		self.local_themes = local_themes
 		self.theme_kwargs = theme_kwargs
 		self.colorscheme = colorscheme
 		self.width_data = {
-				'N':  1,                              # Neutral
-				'Na': 1,                              # Narrow
-				'A':  getattr(self, 'ambiwidth', 1),  # Ambigious
-				'H':  1,                              # Half-width
-				'W':  2,                              # Wide
-				'F':  2,                              # Fullwidth
+				'N': 1,                              # Neutral
+				'Na': 1,                             # Narrow
+				'A': getattr(self, 'ambiwidth', 1),  # Ambigious
+				'H': 1,                              # Half-width
+				'W': 2,                              # Wide
+				'F': 2,                              # Fullwidth
 				}
 
 	def strwidth(self, string):
@@ -40,6 +55,9 @@ class Renderer(object):
 	def get_theme(self, matcher_info):
 		return self.theme
 
+	def shutdown(self):
+		self.theme.shutdown()
+
 	def get_highlighting(self, segment, mode):
 		segment['highlight'] = self.colorscheme.get_highlighting(segment['highlight_group'], mode, segment.get('gradient_level'))
 		if segment['divider_highlight_group']:
@@ -47,6 +65,14 @@ class Renderer(object):
 		else:
 			segment['divider_highlight'] = None
 		return segment
+
+	def get_segment_info(self, segment_info):
+		r = self.segment_info.copy()
+		if segment_info:
+			r.update(segment_info)
+		if 'PWD' in r['environ']:
+			r['getcwd'] = lambda: r['environ']['PWD']
+		return r
 
 	def render(self, mode=None, width=None, side=None, output_raw=False, segment_info=None, matcher_info=None):
 		'''Render all segments.
@@ -58,10 +84,7 @@ class Renderer(object):
 		reached.
 		'''
 		theme = self.get_theme(matcher_info)
-		segments = theme.get_segments(side)
-
-		if segment_info:
-			theme.segment_info.update(segment_info)
+		segments = theme.get_segments(side, self.get_segment_info(segment_info))
 
 		# Handle excluded/included segments for the current mode
 		segments = [self.get_highlighting(segment, mode) for segment in segments
@@ -126,9 +149,10 @@ class Renderer(object):
 			divider_highlighted = ''
 			contents_raw = segment['contents']
 			contents_highlighted = ''
+			draw_divider = segment['draw_' + divider_type + '_divider']
 
 			# Pad segments first
-			if segment['draw_divider'] or (divider_type == 'hard' and segment['width'] != 'auto'):
+			if draw_divider:
 				if segment['side'] == 'left':
 					contents_raw = outer_padding + (segment['_space_left'] * ' ') + contents_raw + ((divider_spaces + segment['_space_right']) * ' ')
 				else:
@@ -156,7 +180,7 @@ class Renderer(object):
 				contents_highlighted = self.hl(self.escape(contents_raw), **segment['highlight'])
 
 			# Append padded raw and highlighted segments to the rendered segment variables
-			if segment['draw_divider'] or (divider_type == 'hard' and segment['width'] != 'auto'):
+			if draw_divider:
 				if segment['side'] == 'left':
 					segment['_rendered_raw'] += contents_raw + divider_raw
 					segment['_rendered_hl'] += contents_highlighted + divider_highlighted

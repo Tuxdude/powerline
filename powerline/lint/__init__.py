@@ -1,5 +1,6 @@
 from powerline.lint.markedjson import load
-from powerline import load_json_config, Powerline
+from powerline import find_config_file, Powerline
+from powerline.lib.config import load_json_config
 from powerline.lint.markedjson.error import echoerr, MarkedError
 from powerline.segments.vim import vim_modes
 import itertools
@@ -8,6 +9,7 @@ import os
 import re
 from collections import defaultdict
 from copy import copy
+import logging
 
 
 try:
@@ -18,14 +20,6 @@ except ImportError:
 
 def open_file(path):
 	return open(path, 'rb')
-
-
-def find_config(search_paths, config_file):
-	config_file += '.json'
-	for path in search_paths:
-		if os.path.isfile(os.path.join(path, config_file)):
-			return path
-	return None
 
 
 EMPTYTUPLE = tuple()
@@ -80,11 +74,15 @@ class Spec(object):
 				spec.context_message(msg)
 		return self
 
-	def check_type(self, value, context_mark, data, context, echoerr, t):
-		if type(value.value) is not t:
+	def check_type(self, value, context_mark, data, context, echoerr, types):
+		if type(value.value) not in types:
 			echoerr(context=self.cmsg.format(key=context_key(context)),
 					context_mark=context_mark,
-					problem='must be a {0} instance'.format(t.__name__),
+					problem='{0!r} must be a {1} instance, not {2}'.format(
+						value,
+						', '.join((t.__name__ for t in types)),
+						type(value.value).__name__
+					),
 					problem_mark=value.mark)
 			return False, True
 		return True, False
@@ -148,8 +146,8 @@ class Spec(object):
 				return False, hadproblem
 		return True, hadproblem
 
-	def type(self, t):
-		self.checks.append(('check_type', t))
+	def type(self, *args):
+		self.checks.append(('check_type', args))
 		return self
 
 	cmp_funcs = {
@@ -179,12 +177,14 @@ class Spec(object):
 	def cmp(self, comparison, cint, msg_func=None):
 		if type(cint) is str:
 			self.type(unicode)
+		elif type(cint) is float:
+			self.type(int, float)
 		else:
 			self.type(type(cint))
 		cmp_func = self.cmp_funcs[comparison]
 		msg_func = msg_func or (lambda value: '{0} is not {1} {2}'.format(value, self.cmp_msgs[comparison], cint))
 		self.checks.append(('check_func',
-					(lambda value, *args: (True, True, not cmp_func(value, cint))),
+					(lambda value, *args: (True, True, not cmp_func(value.value, cint))),
 					msg_func))
 		return self
 
@@ -247,6 +247,11 @@ class Spec(object):
 		self.checks.append(('check_func',
 						lambda value, *args: (True, True, value not in collection),
 						msg_func))
+		return self
+
+	def error(self, msg):
+		self.checks.append(('check_func', lambda *args: (True, True, True),
+							lambda value: msg.format(value)))
 		return self
 
 	def either(self, *specs):
@@ -380,9 +385,9 @@ def check_config(d, theme, data, context, echoerr):
 	else:
 		# local_themes
 		ext = context[-3][0]
-	if ext not in data['configs']['themes'] or theme not in data['configs']['themes'][ext]:
+	if ext not in data['configs'][d] or theme not in data['configs'][d][ext]:
 		echoerr(context='Error while loading {0} from {1} extension configuration'.format(d[:-1], ext),
-				problem='failed to find configuration file themes/{0}/{1}.json'.format(ext, theme),
+				problem='failed to find configuration file {0}/{1}/{2}.json'.format(d, ext, theme),
 				problem_mark=theme.mark)
 		return True, False, True
 	return True, False, False
@@ -408,6 +413,13 @@ main_spec = (Spec(
 		# only for existence of the path, not for it being a directory
 		paths=Spec().list((lambda value, *args: (True, True, not os.path.exists(value.value))),
 					lambda value: 'path does not exist: {0}'.format(value)).optional(),
+		log_file=Spec().type(str).func(lambda value, *args: (True, True, not os.path.isdir(os.path.dirname(value))),
+						lambda value: 'directory does not exist: {0}'.format(os.path.dirname(value))).optional(),
+		log_level=Spec().re('^[A-Z]+$').func(lambda value, *args: (True, True, not hasattr(logging, value)),
+										lambda value: 'unknown debugging level {0}'.format(value)).optional(),
+		log_format=Spec().type(str).optional(),
+		interval=Spec().either(Spec().cmp('gt', 0.0), Spec().type(type(None))).optional(),
+		reload_config=Spec().type(bool).optional(),
 	).context_message('Error while loading common configuration (key {key})'),
 	ext=Spec(
 		vim=Spec(
@@ -415,6 +427,15 @@ main_spec = (Spec(
 			theme=theme_spec(),
 			local_themes=Spec()
 				.unknown_spec(lambda *args: check_matcher_func('vim', *args), theme_spec())
+		),
+		ipython=Spec(
+			colorscheme=colorscheme_spec(),
+			theme=theme_spec(),
+			local_themes=Spec(
+				in2=theme_spec(),
+				out=theme_spec(),
+				rewrite=theme_spec(),
+			),
 		),
 	).unknown_spec(check_ext,
 				Spec(
@@ -498,9 +519,9 @@ vim_colorscheme_spec = (Spec(
 ).context_message('Error while loading vim colorscheme'))
 
 
-generic_keys = set(('exclude_modes', 'include_modes', 'width', 'align', 'name', 'draw_divider', 'priority', 'after', 'before'))
+generic_keys = set(('exclude_modes', 'include_modes', 'width', 'align', 'name', 'draw_soft_divider', 'draw_hard_divider', 'priority', 'after', 'before'))
 type_keys = {
-		'function': set(('args', 'module')),
+		'function': set(('args', 'module', 'draw_inner_divider')),
 		'string': set(('contents', 'type', 'highlight_group', 'divider_highlight_group')),
 		'filler': set(('type', 'highlight_group', 'divider_highlight_group')),
 		}
@@ -687,7 +708,7 @@ def hl_exists(hl_group, data, context, echoerr, allow_gradients=False):
 	for colorscheme, cconfig in data['colorscheme_configs'][ext].items():
 		if hl_group not in cconfig.get('groups', {}):
 			r.append(colorscheme)
-		elif not allow_gradients:
+		elif not allow_gradients or allow_gradients == 'force':
 			group_config = cconfig['groups'][hl_group]
 			hadgradient = False
 			for ckey in ('fg', 'bg'):
@@ -704,14 +725,14 @@ def hl_exists(hl_group, data, context, echoerr, allow_gradients=False):
 					hadgradient = True
 				if allow_gradients is False and not hascolor and hasgradient:
 					echoerr(context='Error while checking highlight group in theme (key {key})'.format(key=context_key(context)),
-							context_mark=hl_group.mark,
+							context_mark=getattr(hl_group, 'mark', None),
 							problem='group {0} is using gradient {1} instead of a color'.format(hl_group, color),
 							problem_mark=color.mark)
 					r.append(colorscheme)
 					continue
 			if allow_gradients == 'force' and not hadgradient:
 					echoerr(context='Error while checking highlight group in theme (key {key})'.format(key=context_key(context)),
-							context_mark=hl_group.mark,
+							context_mark=getattr(hl_group, 'mark', None),
 							problem='group {0} should have at least one gradient color, but it has no'.format(hl_group),
 							problem_mark=group_config.mark)
 					r.append(colorscheme)
@@ -777,6 +798,14 @@ def check_segment_data_key(key, data, context, echoerr):
 	return True, False, False
 
 
+# FIXME More checks, limit existing to ThreadedSegment instances only
+args_spec = Spec(
+	interval=Spec().cmp('gt', 0.0).optional(),
+	update_first=Spec().type(bool).optional(),
+	shutdown_event=Spec().error('Shutdown event must be set by powerline').optional(),
+	pl=Spec().error('pl object must be set by powerline').optional(),
+	segment_info=Spec().error('Segment info dictionary must be set by powerline').optional(),
+).unknown_spec(Spec(), Spec()).optional().copy
 highlight_group_spec = Spec().type(unicode).copy
 segment_module_spec = Spec().type(unicode).func(check_segment_module).optional().copy
 segments_spec = Spec().optional().list(
@@ -785,15 +814,16 @@ segments_spec = Spec().optional().list(
 		name=Spec().re('^[a-zA-Z_]\w+$').func(check_segment_name).optional(),
 		exclude_modes=Spec().list(vim_mode_spec()).optional(),
 		include_modes=Spec().list(vim_mode_spec()).optional(),
-		draw_divider=Spec().type(bool).optional(),
+		draw_hard_divider=Spec().type(bool).optional(),
+		draw_soft_divider=Spec().type(bool).optional(),
+		draw_inner_divider=Spec().type(bool).optional(),
 		module=segment_module_spec(),
-		priority=Spec().cmp('ge', -1).optional(),
+		priority=Spec().either(Spec().cmp('eq', -1), Spec().cmp('ge', 0.0)).optional(),
 		after=Spec().type(unicode).optional(),
 		before=Spec().type(unicode).optional(),
 		width=Spec().either(Spec().unsigned(), Spec().cmp('eq', 'auto')).optional(),
 		align=Spec().oneof(set('lr')).optional(),
-		# FIXME Check args
-		args=Spec().type(dict).optional(),
+		args=args_spec(),
 		contents=Spec().type(unicode).optional(),
 		highlight_group=Spec().list(
 			highlight_group_spec().re('^(?:(?!:divider$).)+$',
@@ -810,8 +840,7 @@ theme_spec = (Spec(
 		Spec(
 			after=Spec().type(unicode).optional(),
 			before=Spec().type(unicode).optional(),
-			# FIXME Check args
-			args=Spec().type(dict).optional(),
+			args=args_spec(),
 			contents=Spec().type(unicode).optional(),
 		),
 	).optional().context_message('Error while loading segment data (key {key})'),
@@ -875,7 +904,7 @@ def check(path=None):
 
 	hadproblem = False
 	try:
-		main_config = load_json_config(search_paths, 'config', load=load_config, open_file=open_file)
+		main_config = load_json_config(find_config_file(search_paths, 'config'), load=load_config, open_file=open_file)
 	except IOError:
 		main_config = {}
 		sys.stderr.write('\nConfiguration file not found: config.json\n')
@@ -891,7 +920,7 @@ def check(path=None):
 	import_paths = [os.path.expanduser(path) for path in main_config.get('common', {}).get('paths', [])]
 
 	try:
-		colors_config = load_json_config(search_paths, 'colors', load=load_config, open_file=open_file)
+		colors_config = load_json_config(find_config_file(search_paths, 'colors'), load=load_config, open_file=open_file)
 	except IOError:
 		colors_config = {}
 		sys.stderr.write('\nConfiguration file not found: colors.json\n')

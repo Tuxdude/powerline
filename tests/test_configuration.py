@@ -7,7 +7,7 @@ import tests.vim as vim_module
 import sys
 import os
 import json
-from tests.lib import Args, urllib_read, replace_module_attr
+from tests.lib import Args, urllib_read, replace_attr
 from tests import TestCase
 
 
@@ -25,47 +25,57 @@ class TestConfig(TestCase):
 		outputs = {}
 		i = 0
 		mode = None
-		powerline = VimPowerline()
 
-		def check_output(*args):
-			out = powerline.renderer.render(*args + (0 if mode == 'nc' else 1,))
-			if out in outputs:
-				self.fail('Duplicate in set #{0} for mode {1!r} (previously defined in set #{2} for mode {3!r})'.format(i, mode, *outputs[out]))
-			outputs[out] = (i, mode)
+		with VimPowerline() as powerline:
+			def check_output(*args):
+				out = powerline.render(*args + (0 if mode == 'nc' else 1,))
+				if out in outputs:
+					self.fail('Duplicate in set #{0} for mode {1!r} (previously defined in set #{2} for mode {3!r})'.format(i, mode, *outputs[out]))
+				outputs[out] = (i, mode)
 
-		with vim_module._with('buffer', 'foo.txt'):
-			with vim_module._with('globals', powerline_config_path=cfg_path):
-				exclude = set(('no', 'v', 'V', VBLOCK, 's', 'S', SBLOCK, 'R', 'Rv', 'c', 'cv', 'ce', 'r', 'rm', 'r?', '!'))
-				try:
-					for mode in ['n', 'nc', 'no', 'v', 'V', VBLOCK, 's', 'S', SBLOCK, 'i', 'R', 'Rv', 'c', 'cv', 'ce', 'r', 'rm', 'r?', '!']:
-						if mode != 'nc':
-							vim_module._start_mode(mode)
-						check_output(1, 0)
-						for args, kwargs in buffers:
-							i += 1
-							if mode in exclude:
-								continue
-							with vim_module._with(*args, **kwargs):
-								check_output(1, 0)
-				finally:
-					vim_module._start_mode('n')
+			with vim_module._with('buffer', 'foo.txt'):
+				with vim_module._with('globals', powerline_config_path=cfg_path):
+					exclude = set(('no', 'v', 'V', VBLOCK, 's', 'S', SBLOCK, 'R', 'Rv', 'c', 'cv', 'ce', 'r', 'rm', 'r?', '!'))
+					try:
+						for mode in ['n', 'nc', 'no', 'v', 'V', VBLOCK, 's', 'S', SBLOCK, 'i', 'R', 'Rv', 'c', 'cv', 'ce', 'r', 'rm', 'r?', '!']:
+							if mode != 'nc':
+								vim_module._start_mode(mode)
+							check_output(1, 0)
+							for args, kwargs in buffers:
+								i += 1
+								if mode in exclude:
+									continue
+								with vim_module._with(*args, **kwargs):
+									check_output(1, 0)
+					finally:
+						vim_module._start_mode('n')
 
 	def test_tmux(self):
 		from powerline.segments import common
 		from imp import reload
 		reload(common)
 		from powerline.shell import ShellPowerline
-		with replace_module_attr(common, 'urllib_read', urllib_read):
-			ShellPowerline(Args(ext=['tmux'])).renderer.render()
-		reload(common)
+		with replace_attr(common, 'urllib_read', urllib_read):
+			with ShellPowerline(Args(ext=['tmux']), run_once=False) as powerline:
+				powerline.render()
+			with ShellPowerline(Args(ext=['tmux']), run_once=False) as powerline:
+				powerline.render()
 
 	def test_zsh(self):
 		from powerline.shell import ShellPowerline
-		ShellPowerline(Args(last_pipe_status=[1, 0], ext=['shell'], renderer_module='zsh_prompt')).renderer.render()
+		args = Args(last_pipe_status=[1, 0], ext=['shell'], renderer_module='zsh_prompt')
+		with ShellPowerline(args, run_once=False) as powerline:
+			powerline.render(segment_info={'args': args})
+		with ShellPowerline(args, run_once=False) as powerline:
+			powerline.render(segment_info={'args': args})
 
 	def test_bash(self):
 		from powerline.shell import ShellPowerline
-		ShellPowerline(Args(last_exit_code=1, ext=['shell'], renderer_module='bash_prompt', config=[('ext', {'shell': {'theme': 'default_leftonly'}})])).renderer.render()
+		args = Args(last_exit_code=1, ext=['shell'], renderer_module='bash_prompt', config=[('ext', {'shell': {'theme': 'default_leftonly'}})])
+		with ShellPowerline(args, run_once=False) as powerline:
+			powerline.render(segment_info={'args': args})
+		with ShellPowerline(args, run_once=False) as powerline:
+			powerline.render(segment_info={'args': args})
 
 	def test_ipython(self):
 		from powerline.ipython import IpythonPowerline
@@ -75,15 +85,19 @@ class TestConfig(TestCase):
 			config_overrides = None
 			theme_overrides = {}
 
-		IpyPowerline().renderer.render()
+		with IpyPowerline() as powerline:
+			segment_info = Args(prompt_count=1)
+			for prompt_type in ['in', 'in2', 'out', 'rewrite']:
+				powerline.render(matcher_info=prompt_type, segment_info=segment_info)
+				powerline.render(matcher_info=prompt_type, segment_info=segment_info)
 
 	def test_wm(self):
 		from powerline.segments import common
 		from imp import reload
 		reload(common)
 		from powerline import Powerline
-		with replace_module_attr(common, 'urllib_read', urllib_read):
-			Powerline(ext='wm', renderer_module='pango_markup').renderer.render()
+		with replace_attr(common, 'urllib_read', urllib_read):
+			Powerline(ext='wm', renderer_module='pango_markup', run_once=True).render()
 		reload(common)
 
 

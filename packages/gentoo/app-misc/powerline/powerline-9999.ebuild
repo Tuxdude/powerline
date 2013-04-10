@@ -105,11 +105,11 @@ src_install() {
 		doins init.lua
 		rm init.lua
 		exeinto /usr/share/awesome/lib/powerline
-		doexe powerline/bindings/awesome/powerline.sh
+		doexe powerline/bindings/awesome/powerline-awesome.py
 	else
 		rm powerline/bindings/awesome/powerline.lua
 	fi
-	rm powerline/bindings/awesome/powerline.sh
+	rm powerline/bindings/awesome/powerline-awesome.py
 	# There are no standard location for this, thus using /usr/share/powerline
 	if use tmux ; then
 		elog ""
@@ -130,6 +130,10 @@ src_install() {
 	fi
 	rm powerline/bindings/bash/powerline.sh
 	elog ""
+	insinto /etc/xdg/powerline
+	doins -r powerline/config_files/*
+	rm -r powerline/config_files
+	sed -i -e "/DEFAULT_SYSTEM_CONFIG_DIR/ s@None@'/etc/xdg'@" powerline/__init__.py
 	distutils-r1_src_install
 	use doc && dohtml -r docs_output/*
 }

@@ -64,6 +64,7 @@ def gen_segment_getter(ext, path, theme_configs, default_module=None):
 		contents, contents_func, module = get_segment_info(data, segment)
 		highlight_group = segment_type != 'function' and segment.get('highlight_group') or segment.get('name')
 		return {
+			'name': segment.get('name'),
 			'type': segment_type,
 			'highlight_group': highlight_group,
 			'divider_highlight_group': None,
@@ -73,12 +74,16 @@ def gen_segment_getter(ext, path, theme_configs, default_module=None):
 			'contents': contents,
 			'args': get_key(segment, module, 'args', {}) if segment_type == 'function' else {},
 			'priority': segment.get('priority', -1),
-			'draw_divider': segment.get('draw_divider', True),
+			'draw_hard_divider': segment.get('draw_hard_divider', True),
+			'draw_soft_divider': segment.get('draw_soft_divider', True),
+			'draw_inner_divider': segment.get('draw_inner_divider', False),
 			'side': side,
 			'exclude_modes': segment.get('exclude_modes', []),
 			'include_modes': segment.get('include_modes', []),
 			'width': segment.get('width'),
 			'align': segment.get('align', 'l'),
+			'shutdown': getattr(contents_func, 'shutdown', None),
+			'startup': getattr(contents_func, 'startup', None),
 			'_rendered_raw': '',
 			'_rendered_hl': '',
 			'_len': 0,

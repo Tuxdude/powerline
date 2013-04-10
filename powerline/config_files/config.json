@@ -15,8 +15,13 @@
 	},
 	"ext": {
 		"ipython": {
-			"colorscheme": "termsaber",
-			"theme": "termsaber"
+			"colorscheme": "default",
+			"theme": "in",
+			"local_themes": {
+				"rewrite": "rewrite",
+				"out": "out",
+				"in2": "in2"
+			}
 		},
 		"shell": {
 			"colorscheme": "termsaber",

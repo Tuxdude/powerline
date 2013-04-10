@@ -8,11 +8,10 @@ from powerline.colorscheme import ATTR_BOLD, ATTR_ITALIC, ATTR_UNDERLINE
 from powerline.theme import Theme
 
 import vim
+import sys
 
 
-vim_mode = vim_get_func('mode')
-vim_getwinvar = vim_get_func('getwinvar')
-vim_setwinvar = vim_get_func('setwinvar')
+vim_mode = vim_get_func('mode', rettype=str)
 mode_translations = {
 	chr(ord('V') - 0x40): '^V',
 	chr(ord('S') - 0x40): '^S',
@@ -31,6 +30,12 @@ class VimRenderer(Renderer):
 		super(VimRenderer, self).__init__(*args, **kwargs)
 		self.hl_groups = {}
 
+	def shutdown(self):
+		self.theme.shutdown()
+		for match in self.local_themes.values():
+			if 'theme' in match:
+				match['theme'].shutdown()
+
 	def add_local_theme(self, matcher, theme):
 		if matcher in self.local_themes:
 			raise KeyError('There is already a local theme with given matcher')
@@ -40,26 +45,31 @@ class VimRenderer(Renderer):
 		for matcher in self.local_themes.keys():
 			if matcher(matcher_info):
 				match = self.local_themes[matcher]
-				if 'config' in match:
-					match['theme'] = Theme(theme_config=match.pop('config'), top_theme_config=self.theme_config, **self.theme_kwargs)
-				return match['theme']
+				try:
+					return match['theme']
+				except KeyError:
+					match['theme'] = Theme(theme_config=match['config'], top_theme_config=self.theme_config, **self.theme_kwargs)
+					return match['theme']
 		else:
 			return self.theme
 
 	if hasattr(vim, 'strwidth'):
-		@staticmethod
-		def strwidth(string):
-			# Does not work with tabs, but neither is strwidth from default 
-			# renderer
-			return vim.strwidth(string.encode('utf-8'))
+		if sys.version_info < (3,):
+			@staticmethod
+			def strwidth(string):
+				# Does not work with tabs, but neither is strwidth from default 
+				# renderer
+				return vim.strwidth(string.encode('utf-8'))
+		else:
+			@staticmethod  # NOQA
+			def strwidth(string):
+				return vim.strwidth(string)
+
+	def get_segment_info(self, segment_info):
+		return segment_info or self.segment_info
 
 	def render(self, window_id, winidx, current):
-		'''Render all segments.
-
-		This method handles replacing of the percent placeholder for vim
-		statuslines, and it caches segment contents which are retrieved and
-		used in non-current windows.
-		'''
+		'''Render all segments.'''
 		if current:
 			mode = vim_mode(1)
 			mode = mode_translations.get(mode, mode)
@@ -69,11 +79,17 @@ class VimRenderer(Renderer):
 			'window': vim.windows[winidx],
 			'mode': mode,
 			'window_id': window_id,
-			}
+		}
 		segment_info['buffer'] = segment_info['window'].buffer
 		segment_info['bufnr'] = segment_info['buffer'].number
+		segment_info.update(self.segment_info)
 		winwidth = segment_info['window'].width
-		statusline = super(VimRenderer, self).render(mode, winwidth, segment_info=segment_info, matcher_info=segment_info)
+		statusline = super(VimRenderer, self).render(
+			mode=mode,
+			width=winwidth,
+			segment_info=segment_info,
+			matcher_info=segment_info,
+		)
 		return statusline
 
 	def reset_highlight(self):
@@ -102,7 +118,7 @@ class VimRenderer(Renderer):
 				'guibg': None,
 				'attr': ['NONE'],
 				'name': '',
-				}
+			}
 			if fg is not None and fg is not False:
 				hl_group['ctermfg'] = fg[0]
 				hl_group['guifg'] = fg[1]
@@ -125,13 +141,13 @@ class VimRenderer(Renderer):
 				''.join(hl_group['attr'])
 			self.hl_groups[(fg, bg, attr)] = hl_group
 			vim.command('hi {group} ctermfg={ctermfg} guifg={guifg} guibg={guibg} ctermbg={ctermbg} cterm={attr} gui={attr}'.format(
-					group=hl_group['name'],
-					ctermfg=hl_group['ctermfg'],
-					guifg='#{0:06x}'.format(hl_group['guifg']) if hl_group['guifg'] is not None else 'NONE',
-					ctermbg=hl_group['ctermbg'],
-					guibg='#{0:06x}'.format(hl_group['guibg']) if hl_group['guibg'] is not None else 'NONE',
-					attr=','.join(hl_group['attr']),
-				))
+				group=hl_group['name'],
+				ctermfg=hl_group['ctermfg'],
+				guifg='#{0:06x}'.format(hl_group['guifg']) if hl_group['guifg'] is not None else 'NONE',
+				ctermbg=hl_group['ctermbg'],
+				guibg='#{0:06x}'.format(hl_group['guibg']) if hl_group['guibg'] is not None else 'NONE',
+				attr=','.join(hl_group['attr']),
+			))
 		return '%#' + self.hl_groups[(fg, bg, attr)]['name'] + '#'
 
 
