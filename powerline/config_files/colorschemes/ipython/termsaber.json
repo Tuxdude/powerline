@@ -3,6 +3,6 @@
     "groups": {
         "virtualenv": { "fg": "white", "bg": "darkblue", "attr": ["bold"] },
         "prompt": { "fg": "gray9", "bg": "gray2", "attr": ["bold"] },
-        "prompt_count": { "fg": "white", "bg": "gray4": ["bold"] }
+        "prompt_count": { "fg": "white", "bg": "gray4", "attr": ["bold"] }
     }
 }
