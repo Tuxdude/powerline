@@ -48,13 +48,13 @@ class RepositoryStatusSegment(common.RepositoryStatusSegment):
     @staticmethod
     def key(segment_info, **kwargs):
         if TmuxInfo.has_tmux(segment_info):
-            return os.path.abspath(TmuxInfo.get_env_var('PWD'))
+            return (TmuxInfo.get_env_var('BRANCHNAME'),
+                    os.path.abspath(TmuxInfo.get_env_var('PWD')))
         else:
-            return os.path.abspath(segment_info['getcwd']())
+            return (segment_info['environ'].get('BRANCHNAME'),
+                    os.path.abspath(segment_info['getcwd']()))
 
-    def compute_state(self, path):
-        # Check if it is a Perforce branch
-        branch_name = TmuxInfo.get_env_var('BRANCHNAME')
+    def compute_state(self, (branch_name, path)):
         if branch_name:
             return True
         else:
@@ -66,17 +66,18 @@ repository_status = with_docstring(RepositoryStatusSegment(),
 
 
 class BranchSegment(common.BranchSegment):
+    started_branch_repository_status = False
 
     @staticmethod
     def key(segment_info, **kwargs):
         if TmuxInfo.has_tmux(segment_info):
-            return os.path.abspath(TmuxInfo.get_env_var('PWD'))
+            return (TmuxInfo.get_env_var('BRANCHNAME'),
+                    os.path.abspath(TmuxInfo.get_env_var('PWD')))
         else:
-            return os.path.abspath(segment_info['getcwd']())
+            return (segment_info['environ'].get('BRANCHNAME'),
+                    os.path.abspath(segment_info['getcwd']()))
 
-    def compute_state(self, path):
-        # Check if it is a Perforce branch
-        branch_name = TmuxInfo.get_env_var('BRANCHNAME')
+    def compute_state(self, (branch_name, path)):
         if branch_name:
             return branch_name
         else:
@@ -95,11 +96,11 @@ class BranchSegment(common.BranchSegment):
     def startup(self, status_colors=False, **kwargs):
         super(BranchSegment, self).startup(**kwargs)
         if status_colors:
-            self.started_repository_status = True
+            self.started_branch_repository_status = True
             repository_status.startup(**kwargs)
 
     def shutdown(self):
-        if self.started_repository_status:
+        if self.started_branch_repository_status:
             repository_status.shutdown()
         super(BranchSegment, self).shutdown()
 
@@ -123,7 +124,7 @@ def virtualenv(pl, segment_info):
         if virtual_env_var is not None:
             return os.path.basename(virtual_env_var)
     else:
-        return common.virtualenv()
+        return common.virtualenv(pl, segment_info)
     return None
 
 
