@@ -1,4 +1,5 @@
 import os
+from powerline.lib.threaded import with_docstring
 from powerline.lib.vcs import guess
 from powerline.theme import requires_segment_info
 import powerline.segments.common as common
@@ -13,6 +14,7 @@ def _run_cmd(cmd):
         sys.stderr.write('Could not execute command ({0}): {1}\n'.format(e, cmd))
         return None
     return stdout.strip()
+
 
 @requires_segment_info
 class TmuxInfo:
@@ -40,49 +42,78 @@ class TmuxInfo:
                 return val
         return None
 
-@requires_segment_info
-def branch(status_colors=True):
-    '''Tmux safe version of returning the current VCS branch.@
 
-    :param bool status_colors:
-    determines whether repository status will be used to determine highlighting.
-    Default: True.
+class RepositoryStatusSegment(common.RepositoryStatusSegment):
 
-    Highlight groups used: ``branch_clean``, ``branch_dirty``, ``branch``.
-    '''
-    if TmuxInfo.has_tmux(segment_info):
+    @staticmethod
+    def key(segment_info, **kwargs):
+        if TmuxInfo.has_tmux(segment_info):
+            return os.path.abspath(TmuxInfo.get_env_var('PWD'))
+        else:
+            return os.path.abspath(segment_info['getcwd']())
+
+    def compute_state(self, path):
         # Check if it is a Perforce branch
         branch_name = TmuxInfo.get_env_var('BRANCHNAME')
-        if branch_name is not None:
-            return [{
-                        'contents' : branch_name,
-                        'highlight_group' : 'branch_dirty'
-                    }]
-
-        # Try other VCSs next
-        cwd = TmuxInfo.get_env_var('PWD')
-        if cwd is not None:
-            repo = guess(path=cwd)
-            if repo:
-                branch_name = repo.branch()
-                if status_colors:
-                    return [{
-                                'contents': branch_name,
-                                'highlight_group': ['branch_dirty' if repo.status() else 'branch_clean', 'branch'],
-                            }]
-                else:
-                    return branch_name
-    else:
-        # Check if it is a Perforce branch
-        branch_name = segment_info['environ'].get('BRANCHNAME')
-        if branch_name is not None:
-            return [{
-                        'contents' : branch_name,
-                        'highlight_group' : 'branch_dirty'
-                    }]
+        if branch_name:
+            return True
         else:
-            return common.branch(status_colors)
-    return None
+            return super(RepositoryStatusSegment, self).compute_state(path)
+
+
+repository_status = with_docstring(RepositoryStatusSegment(),
+'''Return the status for the current VCS repository.''')
+
+
+class BranchSegment(common.BranchSegment):
+
+    @staticmethod
+    def key(segment_info, **kwargs):
+        if TmuxInfo.has_tmux(segment_info):
+            return os.path.abspath(TmuxInfo.get_env_var('PWD'))
+        else:
+            return os.path.abspath(segment_info['getcwd']())
+
+    def compute_state(self, path):
+        # Check if it is a Perforce branch
+        branch_name = TmuxInfo.get_env_var('BRANCHNAME')
+        if branch_name:
+            return branch_name
+        else:
+            return super(BranchSegment, self).compute_state(path)
+
+    @staticmethod
+    def render_one(branch, status_colors=False, **kwargs):
+        if branch and status_colors:
+            return [{
+                'contents': branch,
+                'highlight_group': ['branch_dirty' if repository_status(**kwargs) else 'branch_clean', 'branch'],
+            }]
+        else:
+            return branch
+
+    def startup(self, status_colors=False, **kwargs):
+        super(BranchSegment, self).startup(**kwargs)
+        if status_colors:
+            self.started_repository_status = True
+            repository_status.startup(**kwargs)
+
+    def shutdown(self):
+        if self.started_repository_status:
+            repository_status.shutdown()
+        super(BranchSegment, self).shutdown()
+
+
+branch = with_docstring(BranchSegment(),
+'''Tmux safe version of returning the current VCS branch.@
+
+:param bool status_colors:
+determines whether repository status will be used to determine highlighting.
+Default: True.
+
+Highlight groups used: ``branch_clean``, ``branch_dirty``, ``branch``.
+''')
+
 
 @requires_segment_info
 def virtualenv(pl, segment_info):
@@ -95,12 +126,14 @@ def virtualenv(pl, segment_info):
         return common.virtualenv()
     return None
 
+
 @requires_segment_info
 def sandbox_id(pl, segment_info):
     if TmuxInfo.has_tmux(segment_info):
         return TmuxInfo.get_env_var('SANDBOX_ID')
     else:
         return segment_info['environ'].get('SANDBOX_ID')
+
 
 @requires_segment_info
 def sandbox_flavor(pl, segment_info):
@@ -109,6 +142,6 @@ def sandbox_flavor(pl, segment_info):
     else:
         return segment_info['environ'].get('FLAVOR')
 
-@requires_segment_info
-def spacer(pl, segment_info):
+
+def spacer(pl):
     return ''
