@@ -13,7 +13,9 @@ def _run_cmd(cmd):
     except OSError as e:
         sys.stderr.write('Could not execute command ({0}): {1}\n'.format(e, cmd))
         return None
-    return stdout.strip()
+    if stdout:
+        return stdout.decode('utf-8').strip()
+    return None
 
 
 @requires_segment_info
@@ -54,11 +56,12 @@ class RepositoryStatusSegment(common.RepositoryStatusSegment):
             return (segment_info['environ'].get('BRANCHNAME'),
                     os.path.abspath(segment_info['getcwd']()))
 
-    def compute_state(self, (branch_name, path)):
-        if branch_name:
+    def compute_state(self, branch_name_path):
+        if branch_name_path[0]:
             return True
         else:
-            return super(RepositoryStatusSegment, self).compute_state(path)
+            return super(RepositoryStatusSegment,
+                         self).compute_state(branch_name_path[1])
 
 
 repository_status = with_docstring(RepositoryStatusSegment(),
@@ -77,11 +80,12 @@ class BranchSegment(common.BranchSegment):
             return (segment_info['environ'].get('BRANCHNAME'),
                     os.path.abspath(segment_info['getcwd']()))
 
-    def compute_state(self, (branch_name, path)):
-        if branch_name:
-            return branch_name
+    def compute_state(self, branch_name_path):
+        if branch_name_path[0]:
+            return branch_name_path[0]
         else:
-            return super(BranchSegment, self).compute_state(path)
+            return super(BranchSegment,
+                         self).compute_state(branch_name_path[1])
 
     @staticmethod
     def render_one(branch, status_colors=False, **kwargs):
