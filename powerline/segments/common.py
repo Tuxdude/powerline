@@ -558,7 +558,10 @@ try:
 				yield interface, data.bytes_recv, data.bytes_sent
 
 	def _get_user(segment_info):
-		return psutil.Process(os.getpid()).username
+		try:
+			return psutil.Process(os.getpid()).username()
+		except TypeError:
+			return psutil.Process(os.getpid()).username
 
 	class CPULoadPercentSegment(ThreadedSegment):
 		interval = 1
